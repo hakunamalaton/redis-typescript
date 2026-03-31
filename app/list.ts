@@ -1,10 +1,11 @@
-import { generateArray, generateInteger, generateNull } from "./formatResponse";
+import { generateArray, generateBulkString, generateInteger, generateNull } from "./formatResponse";
 
 const listCommands = {
   'rpush': 'rpush',
   'lrange': 'lrange',
   'lpush': 'lpush',
   'llen': 'llen',
+  'lpop': 'lpop',
 }
 
 const listObject: Record<string, Array<string>> = {};
@@ -62,6 +63,17 @@ function handleLLen(key: string): string {
   return generateInteger(listObject[key].length);
 }
 
+function isLPop(command: string): boolean {
+  return command.toLowerCase() === listCommands['lpop'];
+}
+function handleLPop(key: string): string {
+  if (!listObject[key] || listObject[key].length === 0) {
+    return generateNull();
+  }
+  const value = listObject[key].pop();
+  return generateBulkString(value || '');
+}
+
 export function handleList(command: string, key: string, args: Array<string>): string {
   if (isRPush(command)) {
     return handleRPush(key, extractListValues(args));
@@ -71,6 +83,8 @@ export function handleList(command: string, key: string, args: Array<string>): s
     return handleLPush(key, extractListValues(args));
   } else if (isLLen(command)) {
     return handleLLen(key);
+  } else if (isLPop(command)) {
+    return handleLPop(key);
   }
 
   return generateNull();
