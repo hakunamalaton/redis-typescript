@@ -13,11 +13,11 @@ function isRPush(command: string): boolean {
   return command.toLowerCase() === RPUSH;
 }
 
-function handleRPush(key: string, args: Array<string>): string {
+function handleRPush(key: string, values: Array<string>): string {
   if (!listObject[key]) {
     listObject[key] = [];
   }
-  listObject[key].push(...extractListValues(args));
+  listObject[key].push(...values);
   return generateInteger(listObject[key].length);
 }
 
@@ -29,15 +29,18 @@ function extractListValues(args: Array<string>): Array<string> {
   return args.filter((_, index) => index % 2 === 1);
 }
 
-function handleLRange(key: string, args: [number, number]): string {
-  return generateArray(listObject[key].slice(args[0], args[1]));
+function handleLRange(key: string, indexes: [number, number]): string {
+  if (!listObject[key]) {
+    return generateArray([]);
+  }
+  return generateArray(listObject[key].slice(indexes[0], indexes[1] + 1));
 }
 
-export function handleList(command: string, key: string, args: Array<string> | [number, number]): string {
+export function handleList(command: string, key: string, args: Array<string>): string {
   if (isRPush(command)) {
-    return handleRPush(key, args as Array<string>);
+    return handleRPush(key, extractListValues(args));
   } else if (isLRange(command)) {
-    return handleLRange(key, args as [number, number]);
+    return handleLRange(key, extractListValues(args).map(Number) as [number, number]);
   }
 
   return generateNull();
