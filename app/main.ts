@@ -2,12 +2,10 @@ import * as net from "net";
 import { parse } from "./parser";
 
 const server: net.Server = net.createServer((connection: net.Socket) => {
-  connection.on("data", (data: Buffer) => {
-    const response = parse(data.toString());
+  connection.on("data", async (data: Buffer) => {
+    const response = await parse(data.toString());
     if (response) {
       connection.write(response);
-    } else {
-      connection.write('+PONG\r\n');
     }
   });
 });

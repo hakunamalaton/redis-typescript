@@ -1,4 +1,4 @@
-import { generateArray, generateBulkString, generateInteger, generateNull } from "./formatResponse";
+import { generateArray, generateBulkString, generateInteger, generateNull, generateSimpleString } from "./formatResponse";
 
 const listCommands = {
   'rpush': 'rpush',
@@ -6,6 +6,7 @@ const listCommands = {
   'lpush': 'lpush',
   'llen': 'llen',
   'lpop': 'lpop',
+  'blpop': 'blpop',
 }
 
 const listObject: Record<string, Array<string>> = {};
@@ -78,7 +79,20 @@ function handleLPop(key: string, count: number): string {
   }
 }
 
-export function handleList(command: string, key: string, args: Array<string>): string {
+function isBLPop(command: string): boolean {
+  return command.toLowerCase() === listCommands['blpop'];
+}
+async function handleBLPop(key: string, timeout: number) {
+  while (!listObject[key] || listObject[key].length === 0) {
+    await new Promise(resolve => setTimeout(resolve, 0));
+  }
+  const value = listObject[key].shift();
+  if (value) {
+    return generateArray([key, value])
+  }
+}
+
+export async function handleList(command: string, key: string, args: Array<string>) {
   if (isRPush(command)) {
     return handleRPush(key, extractListValues(args));
   } else if (isLRange(command)) {
@@ -89,6 +103,8 @@ export function handleList(command: string, key: string, args: Array<string>): s
     return handleLLen(key);
   } else if (isLPop(command)) {
     return handleLPop(key, extractListValues(args).map(Number)[0] || 1);
+  } else if (isBLPop(command)) {
+    return await handleBLPop(key, extractListValues(args).map(Number)[0] || 0);
   }
 
   return generateNull();
