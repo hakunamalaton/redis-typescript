@@ -88,7 +88,7 @@ async function handleBLPop(key: string, timeout: number) {
     while (startTime + timeout * 1000 > Date.now() && (!listObject[key] || listObject[key].length === 0)) {
       await new Promise(resolve => setTimeout(resolve, 0)); // block the client
     }
-    const value = listObject[key].shift();
+    const value = listObject?.[key]?.shift();
     if (value) {
       return generateArray([key, value])
     } else {
