@@ -66,12 +66,16 @@ function handleLLen(key: string): string {
 function isLPop(command: string): boolean {
   return command.toLowerCase() === listCommands['lpop'];
 }
-function handleLPop(key: string): string {
+function handleLPop(key: string, count: number): string {
   if (!listObject[key] || listObject[key].length === 0) {
     return generateNull();
   }
-  const value = listObject[key].shift();
-  return generateBulkString(value || '');
+  const value = listObject[key].splice(0, count);
+  if (value.length === 1) {
+    return generateBulkString(value[0]);
+  } else {
+    return generateArray(value);
+  }
 }
 
 export function handleList(command: string, key: string, args: Array<string>): string {
@@ -84,7 +88,7 @@ export function handleList(command: string, key: string, args: Array<string>): s
   } else if (isLLen(command)) {
     return handleLLen(key);
   } else if (isLPop(command)) {
-    return handleLPop(key);
+    return handleLPop(key, extractListValues(args).map(Number)[0] || 1);
   }
 
   return generateNull();
