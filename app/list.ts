@@ -3,6 +3,7 @@ import { generateArray, generateInteger, generateNull } from "./formatResponse";
 const RPUSH = "rpush";
 const LRANGE = "lrange";
 const LPUSH = "lpush";
+const LLEN = "llen";
 
 const listObject: Record<string, Array<string>> = {};
 
@@ -16,6 +17,10 @@ function isRPush(command: string): boolean {
 
 function isLPush(command: string): boolean {
   return command.toLowerCase() === LPUSH;
+}
+
+function isLLen(command: string): boolean {
+  return command.toLowerCase() === LLEN;
 }
 
 function handleRPush(key: string, values: Array<string>): string {
@@ -51,6 +56,13 @@ function handleLPush(key: string, values: Array<string>): string {
   return generateInteger(listObject[key].length);
 }
 
+function handleLLen(key: string): string {
+  if (!listObject[key]) {
+    return generateInteger(0);
+  }
+  return generateInteger(listObject[key].length);
+}
+
 export function handleList(command: string, key: string, args: Array<string>): string {
   if (isRPush(command)) {
     return handleRPush(key, extractListValues(args));
@@ -58,6 +70,8 @@ export function handleList(command: string, key: string, args: Array<string>): s
     return handleLRange(key, extractListValues(args).map(Number) as [number, number]);
   } else if (isLPush(command)) {
     return handleLPush(key, extractListValues(args));
+  } else if (isLLen(command)) {
+    return handleLLen(key);
   }
 
   return generateNull();
