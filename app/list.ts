@@ -2,15 +2,20 @@ import { generateArray, generateInteger, generateNull } from "./formatResponse";
 
 const RPUSH = "rpush";
 const LRANGE = "lrange";
+const LPUSH = "lpush";
 
 const listObject: Record<string, Array<string>> = {};
 
 export function isList(command: string): boolean {
-  return [RPUSH, LRANGE].includes(command.toLowerCase());
+  return [RPUSH, LRANGE, LPUSH].includes(command.toLowerCase());
 }
 
 function isRPush(command: string): boolean {
   return command.toLowerCase() === RPUSH;
+}
+
+function isLPush(command: string): boolean {
+  return command.toLowerCase() === LPUSH;
 }
 
 function handleRPush(key: string, values: Array<string>): string {
@@ -38,11 +43,21 @@ function handleLRange(key: string, indexes: [number, number]): string {
   return generateArray(listObject[key].slice(start, end + 1));
 }
 
+function handleLPush(key: string, values: Array<string>): string {
+  if (!listObject[key]) {
+    listObject[key] = [];
+  }
+  listObject[key].unshift(...values);
+  return generateInteger(listObject[key].length);
+}
+
 export function handleList(command: string, key: string, args: Array<string>): string {
   if (isRPush(command)) {
     return handleRPush(key, extractListValues(args));
   } else if (isLRange(command)) {
     return handleLRange(key, extractListValues(args).map(Number) as [number, number]);
+  } else if (isLPush(command)) {
+    return handleLPush(key, extractListValues(args));
   }
 
   return generateNull();
