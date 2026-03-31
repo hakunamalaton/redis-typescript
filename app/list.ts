@@ -83,8 +83,20 @@ function isBLPop(command: string): boolean {
   return command.toLowerCase() === listCommands['blpop'];
 }
 async function handleBLPop(key: string, timeout: number) {
+  if (timeout > 0) {
+    const startTime = Date.now();
+    while (startTime + timeout * 1000 > Date.now() && (!listObject[key] || listObject[key].length === 0)) {
+      await new Promise(resolve => setTimeout(resolve, 0)); // block the client
+    }
+    const value = listObject[key].shift();
+    if (value) {
+      return generateArray([key, value])
+    } else {
+      return generateNull();
+    }
+  }
   while (!listObject[key] || listObject[key].length === 0) {
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise(resolve => setTimeout(resolve, 0)); // block the client
   }
   const value = listObject[key].shift();
   if (value) {
