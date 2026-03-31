@@ -3,6 +3,16 @@ import { handleList, isList } from "./list";
 import { handlePing, isPing } from "./pingCommand";
 import { handleString, isString } from "./string";
 
+function extractArguments(data: string): Array<string> {
+  const [
+    _, // *<number>
+    ...args // [length1, value1, length2, value2, length3, value3, ...]
+  ] = data.split("\r\n");
+  const command = args[1];
+
+  return args;
+}
+
 export function parse(data: string): string | undefined {
   const [
     _, // *<number>
@@ -22,7 +32,7 @@ export function parse(data: string): string | undefined {
   } else if (isString(command)) {
     return handleString(command, firstArgument, secondArgument, { [thirdArgument]: fourthArgument });
   } else if (isList(command)) {
-    return handleList(firstArgument, secondArgument);
+    return handleList(firstArgument, args.slice(4));
   }
 
   return undefined;
