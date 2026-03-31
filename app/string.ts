@@ -17,12 +17,8 @@ interface SetValue {
 
 const stringObject: Record<string, SetValue> = {};
 
-export function isSet(command: string): boolean {
-  return command.toLowerCase() === SET;
-}
-
-export function isGet(command: string): boolean {
-  return command.toLowerCase() === GET;
+export function isString(command: string): boolean {
+  return command.toLowerCase() === SET || command.toLowerCase() === GET;
 }
 
 export function isExpiration(command: string): boolean {
@@ -41,7 +37,7 @@ function setExpiration(key: string, options?: SetOptions): void {
   }
 }
 
-export function handleSet(key: string, value: string, options?: SetOptions): string {
+function handleSet(key: string, value: string, options?: SetOptions): string {
   stringObject[key] = { value };
   Object.entries(options || {}).forEach(([optionCommand, optionValue]) => {
     if (isExpiration(optionCommand)) {
@@ -52,7 +48,7 @@ export function handleSet(key: string, value: string, options?: SetOptions): str
   return generateSimpleString('OK');
 }
 
-export function handleGet(key: string): string {
+function handleGet(key: string): string {
   if (stringObject[key]) {
     if (stringObject[key].expiration && stringObject[key].expiration < Date.now()) {
       delete stringObject[key];
@@ -62,4 +58,13 @@ export function handleGet(key: string): string {
   } else {
     return generateNull();
   }
+}
+
+export function handleString(command: string, key: string, value: string, options?: SetOptions): string {
+  if (command.toLowerCase() === SET) {
+    return handleSet(key, value, options);
+  } else if (command.toLowerCase() === GET) {
+    return handleGet(key);
+  }
+  return generateNull();
 }

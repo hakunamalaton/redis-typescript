@@ -2,6 +2,10 @@ export function generateSimpleString(value: string): string {
   return `+${value}\r\n`;
 }
 
+export function generateInteger(value: number): string {
+  return `:${value}\r\n`;
+}
+
 export function generateBulkString(value: string): string {
   return `$${value.length}\r\n${value}\r\n`;
 }

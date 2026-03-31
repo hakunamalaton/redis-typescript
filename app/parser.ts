@@ -1,7 +1,7 @@
 import { handleEcho, isEcho } from "./echoCommand";
+import { handleList, isList } from "./list";
 import { handlePing, isPing } from "./pingCommand";
-import { handleGet, handleSet, isGet, isSet } from "./setGetCommand";
-
+import { handleString, isString } from "./string";
 
 export function parse(data: string): string | undefined {
   const [
@@ -19,10 +19,10 @@ export function parse(data: string): string | undefined {
     return handlePing();
   } else if (isEcho(command)) {
     return handleEcho(firstArgument);
-  } else if (isSet(command)) {
-    return handleSet(firstArgument, secondArgument, { [thirdArgument]: fourthArgument });
-  } else if (isGet(command)) {
-    return handleGet(firstArgument);
+  } else if (isString(command)) {
+    return handleString(command, firstArgument, secondArgument, { [thirdArgument]: fourthArgument });
+  } else if (isList(command)) {
+    return handleList(firstArgument, secondArgument);
   }
 
   return undefined;
