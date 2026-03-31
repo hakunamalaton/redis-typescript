@@ -47,7 +47,7 @@ function handleLPush(key: string, values: Array<string>): string {
   if (!listObject[key]) {
     listObject[key] = [];
   }
-  listObject[key].unshift(...values);
+  listObject[key].unshift(...values.toReversed());
   return generateInteger(listObject[key].length);
 }
 
