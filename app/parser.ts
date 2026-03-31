@@ -32,7 +32,7 @@ export function parse(data: string): string | undefined {
   } else if (isString(command)) {
     return handleString(command, firstArgument, secondArgument, { [thirdArgument]: fourthArgument });
   } else if (isList(command)) {
-    return handleList(firstArgument, args.slice(4));
+    return handleList(command, firstArgument, args.slice(4));
   }
 
   return undefined;

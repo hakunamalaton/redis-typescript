@@ -44,7 +44,6 @@ function handleSet(key: string, value: string, options?: SetOptions): string {
       setExpiration(key, { [optionCommand.toLowerCase()]: optionValue });
     }
   });
-  console.log(stringObject);
   return generateSimpleString('OK');
 }
 
