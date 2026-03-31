@@ -1,28 +1,21 @@
 import { generateArray, generateInteger, generateNull } from "./formatResponse";
 
-const RPUSH = "rpush";
-const LRANGE = "lrange";
-const LPUSH = "lpush";
-const LLEN = "llen";
+const listCommands = {
+  'rpush': 'rpush',
+  'lrange': 'lrange',
+  'lpush': 'lpush',
+  'llen': 'llen',
+}
 
 const listObject: Record<string, Array<string>> = {};
 
 export function isList(command: string): boolean {
-  return [RPUSH, LRANGE, LPUSH].includes(command.toLowerCase());
+  return Object.keys(listCommands).includes(command.toLowerCase());
 }
 
 function isRPush(command: string): boolean {
-  return command.toLowerCase() === RPUSH;
+  return command.toLowerCase() === listCommands['rpush'];
 }
-
-function isLPush(command: string): boolean {
-  return command.toLowerCase() === LPUSH;
-}
-
-function isLLen(command: string): boolean {
-  return command.toLowerCase() === LLEN;
-}
-
 function handleRPush(key: string, values: Array<string>): string {
   if (!listObject[key]) {
     listObject[key] = [];
@@ -31,14 +24,14 @@ function handleRPush(key: string, values: Array<string>): string {
   return generateInteger(listObject[key].length);
 }
 
-function isLRange(command: string): boolean {
-  return command.toLowerCase() === LRANGE;
-}
 
 function extractListValues(args: Array<string>): Array<string> {
   return args.filter((_, index) => index % 2 === 1);
 }
 
+function isLRange(command: string): boolean {
+  return command.toLowerCase() === listCommands['lrange'];
+}
 function handleLRange(key: string, indexes: [number, number]): string {
   if (!listObject[key]) {
     return generateArray([]);
@@ -48,6 +41,9 @@ function handleLRange(key: string, indexes: [number, number]): string {
   return generateArray(listObject[key].slice(start, end + 1));
 }
 
+function isLPush(command: string): boolean {
+  return command.toLowerCase() === listCommands['lpush'];
+}
 function handleLPush(key: string, values: Array<string>): string {
   if (!listObject[key]) {
     listObject[key] = [];
@@ -56,6 +52,9 @@ function handleLPush(key: string, values: Array<string>): string {
   return generateInteger(listObject[key].length);
 }
 
+function isLLen(command: string): boolean {
+  return command.toLowerCase() === listCommands['llen'];
+}
 function handleLLen(key: string): string {
   if (!listObject[key]) {
     return generateInteger(0);
