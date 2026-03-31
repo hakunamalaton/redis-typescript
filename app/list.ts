@@ -33,8 +33,8 @@ function handleLRange(key: string, indexes: [number, number]): string {
   if (!listObject[key]) {
     return generateArray([]);
   }
-  const start = indexes[0] >= 0 ? indexes[0] : listObject[key].length + indexes[0];
-  const end = indexes[1] >= 0 ? indexes[1] : listObject[key].length + indexes[1];
+  const start = indexes[0] >= 0 ? indexes[0] : Math.max(0, listObject[key].length + indexes[0]);
+  const end = indexes[1] >= 0 ? indexes[1] : Math.max(0, listObject[key].length + indexes[1]);
   return generateArray(listObject[key].slice(start, end + 1));
 }
 
