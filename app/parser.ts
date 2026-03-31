@@ -1,47 +1,28 @@
-const PING = "ping";
-const ECHO = "echo";
-const SET = "set";
-const GET = "get";
+import { handleEcho, isEcho } from "./echoCommand";
+import { handlePing, isPing } from "./pingCommand";
+import { handleGet, handleSet, isGet, isSet } from "./setGetCommand";
 
-const stringObject: Record<string, string> = {};
-
-function isPing(command: string): boolean {
-  return command.toLowerCase() === PING;
-}
-
-function isEcho(command: string): boolean {
-  return command.toLowerCase() === ECHO;
-}
-
-function isSet(command: string): boolean {
-  return command.toLowerCase() === SET;
-}
-
-function isGet(command: string): boolean {
-  return command.toLowerCase() === GET;
-}
 
 export function parse(data: string): string | undefined {
   const [
-    totalWords, // *<number>
+    _, // *<number>
     ...args
   ] = data.split("\r\n");
 
   const command = args[1];
+  const firstArgument = args[3];
+  const secondArgument = args[5];
+  const thirdArgument = args[7];
+  const fourthArgument = args[9];
 
   if (isPing(command)) {
-    return '+PONG\r\n';
+    return handlePing();
   } else if (isEcho(command)) {
-    return `\$${args[3].length}\r\n${args[3]}\r\n`;
+    return handleEcho(firstArgument);
   } else if (isSet(command)) {
-    stringObject[args[3]] = args[5];
-    return `+OK\r\n`;
+    return handleSet(firstArgument, secondArgument, { [thirdArgument]: fourthArgument });
   } else if (isGet(command)) {
-    if (stringObject[args[3]]) {
-      return `\$${stringObject[args[3]].length}\r\n${stringObject[args[3]]}\r\n`;
-    } else {
-      return `$-1\r\n`;
-    }
+    return handleGet(firstArgument);
   }
 
   return undefined;
