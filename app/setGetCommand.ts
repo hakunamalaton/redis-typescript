@@ -29,8 +29,7 @@ export function isExpiration(command: string): boolean {
   return command.toLowerCase() === PX || command.toLowerCase() === EX;
 }
 
-export function handleSet(key: string, value: string, options?: SetOptions): string {
-  stringObject[key] = { value };
+function setExpiration(key: string, options?: SetOptions): void {
   let expiration: number | undefined;
   if (options?.px) {
     expiration = Number(options.px);
@@ -40,6 +39,16 @@ export function handleSet(key: string, value: string, options?: SetOptions): str
   if (expiration) {
     stringObject[key].expiration = Date.now() + expiration;
   }
+}
+
+export function handleSet(key: string, value: string, options?: SetOptions): string {
+  stringObject[key] = { value };
+  Object.entries(options || {}).forEach(([optionCommand, optionValue]) => {
+    if (isExpiration(optionCommand)) {
+      setExpiration(key, { [optionCommand.toLowerCase()]: optionValue });
+    }
+  });
+  console.log(stringObject);
   return generateSimpleString('OK');
 }
 
