@@ -70,7 +70,7 @@ function handleLPop(key: string): string {
   if (!listObject[key] || listObject[key].length === 0) {
     return generateNull();
   }
-  const value = listObject[key].pop();
+  const value = listObject[key].shift();
   return generateBulkString(value || '');
 }
 
