@@ -14,6 +14,10 @@ export function generateArray(values: string[]): string {
   return `*${values.length}\r\n${values.map(generateBulkString).join('')}`;
 }
 
+export function generateNullArray(): string {
+  return `*-1\r\n`;
+}
+
 export function generateNull() {
   return `$-1\r\n` as const;
 }

@@ -1,4 +1,4 @@
-import { generateArray, generateBulkString, generateInteger, generateNull, generateSimpleString } from "./formatResponse";
+import { generateArray, generateBulkString, generateInteger, generateNull, generateNullArray } from "./formatResponse";
 
 const listCommands = {
   'rpush': 'rpush',
@@ -92,7 +92,7 @@ async function handleBLPop(key: string, timeout: number) {
     if (value) {
       return generateArray([key, value])
     } else {
-      return generateNull();
+      return generateNullArray();
     }
   }
   while (!listObject[key] || listObject[key].length === 0) {
