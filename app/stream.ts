@@ -32,7 +32,7 @@ function handleXAdd(streamKey: string, values: Record<string, string>): string {
   Object.entries(values).forEach(([key, value]) => {
     streamObject[streamKey][key] = value;
   });
-  return generateBulkString(streamKey);
+  return generateBulkString(values['id']);
 }
 
 export function handleStream(command: string, key: string, args: Array<string>): string {
