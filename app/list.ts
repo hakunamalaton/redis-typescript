@@ -1,4 +1,5 @@
 import { generateArray, generateBulkString, generateInteger, generateNull, generateNullArray } from "./formatResponse";
+import { listObject } from "./structure";
 
 const listCommands = {
   'rpush': 'rpush',
@@ -9,7 +10,6 @@ const listCommands = {
   'blpop': 'blpop',
 }
 
-const listObject: Record<string, Array<string>> = {};
 const waiters: Record<string, Array<(value: string | null) => void>> = {};
 
 export function isList(command: string): boolean {

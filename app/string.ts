@@ -1,4 +1,5 @@
 import { generateBulkString, generateNull, generateSimpleString } from "./formatResponse";
+import { stringObject } from "./structure";
 
 const SET = "set";
 const GET = "get";
@@ -9,13 +10,6 @@ interface SetOptions {
   px?: number;
   ex?: number;
 }
-
-interface SetValue {
-  value: string;
-  expiration?: number;
-}
-
-const stringObject: Record<string, SetValue> = {};
 
 export function isString(command: string): boolean {
   return command.toLowerCase() === SET || command.toLowerCase() === GET;

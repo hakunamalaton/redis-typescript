@@ -2,6 +2,7 @@ import { handleEcho, isEcho } from "./echoCommand";
 import { handleList, isList } from "./list";
 import { handlePing, isPing } from "./pingCommand";
 import { handleString, isString } from "./string";
+import { handleType, isType } from "./typeCommand";
 
 export async function parse(data: string): Promise<string | undefined> {
   const [
@@ -23,6 +24,8 @@ export async function parse(data: string): Promise<string | undefined> {
     return handleString(command, firstArgument, secondArgument, { [thirdArgument]: fourthArgument });
   } else if (isList(command)) {
     return await handleList(command, firstArgument, args.slice(4));
+  } else if (isType(command)) {
+    return handleType(firstArgument);
   }
 
   return undefined;
