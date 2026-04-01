@@ -32,8 +32,9 @@ function handleRPush(key: string, values: Array<string>): string {
     listObject[key] = [];
   }
   listObject[key].push(...values);
+  const newLength = listObject[key].length;
   notifyWaiters(key);
-  return generateInteger(listObject[key].length);
+  return generateInteger(newLength);
 }
 
 
@@ -61,8 +62,9 @@ function handleLPush(key: string, values: Array<string>): string {
     listObject[key] = [];
   }
   listObject[key].unshift(...values.toReversed());
+  const newLength = listObject[key].length;
   notifyWaiters(key);
-  return generateInteger(listObject[key].length);
+  return generateInteger(newLength);
 }
 
 function isLLen(command: string): boolean {
