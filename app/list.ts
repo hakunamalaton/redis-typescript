@@ -10,6 +10,7 @@ const listCommands = {
 }
 
 const listObject: Record<string, Array<string>> = {};
+const waiters: Record<string, Array<(value: string | null) => void>> = {};
 
 export function isList(command: string): boolean {
   return Object.keys(listCommands).includes(command.toLowerCase());
@@ -18,11 +19,20 @@ export function isList(command: string): boolean {
 function isRPush(command: string): boolean {
   return command.toLowerCase() === listCommands['rpush'];
 }
+function notifyWaiters(key: string): void {
+  while (waiters[key]?.length && listObject[key]?.length) {
+    const waiter = waiters[key].shift()!;
+    const value = listObject[key].shift()!;
+    waiter(value);
+  }
+}
+
 function handleRPush(key: string, values: Array<string>): string {
   if (!listObject[key]) {
     listObject[key] = [];
   }
   listObject[key].push(...values);
+  notifyWaiters(key);
   return generateInteger(listObject[key].length);
 }
 
@@ -51,6 +61,7 @@ function handleLPush(key: string, values: Array<string>): string {
     listObject[key] = [];
   }
   listObject[key].unshift(...values.toReversed());
+  notifyWaiters(key);
   return generateInteger(listObject[key].length);
 }
 
@@ -83,25 +94,33 @@ function isBLPop(command: string): boolean {
   return command.toLowerCase() === listCommands['blpop'];
 }
 async function handleBLPop(key: string, timeout: number) {
-  if (timeout > 0) {
-    const startTime = Date.now();
-    while (startTime + timeout * 1000 > Date.now() && (!listObject[key] || listObject[key].length === 0)) {
-      await new Promise(resolve => setTimeout(resolve, 0)); // block the client
-    }
-    const value = listObject?.[key]?.shift();
-    if (value) {
-      return generateArray([key, value])
-    } else {
-      return generateNullArray();
-    }
+  // If data already exists, return immediately
+  const existing = listObject?.[key]?.shift();
+  if (existing) {
+    return generateArray([key, existing]);
   }
-  while (!listObject[key] || listObject[key].length === 0) {
-    await new Promise(resolve => setTimeout(resolve, 0)); // block the client
-  }
-  const value = listObject[key].shift();
+
+  // Register a waiter and wait for a push to resolve it
+  const value = await new Promise<string | null>((resolve) => {
+    if (!waiters[key]) waiters[key] = [];
+    waiters[key].push(resolve);
+
+    if (timeout > 0) {
+      setTimeout(() => {
+        // Remove this waiter on timeout
+        const idx = waiters[key]?.indexOf(resolve);
+        if (idx !== undefined && idx !== -1) {
+          waiters[key].splice(idx, 1);
+        }
+        resolve(null);
+      }, timeout * 1000);
+    }
+  });
+
   if (value) {
-    return generateArray([key, value])
+    return generateArray([key, value]);
   }
+  return generateNullArray();
 }
 
 export async function handleList(command: string, key: string, args: Array<string>) {
