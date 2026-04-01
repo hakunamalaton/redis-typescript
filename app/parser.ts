@@ -3,7 +3,9 @@ import { handleList, isList } from "./list";
 import { handlePing, isPing } from "./pingCommand";
 import { handleString, isString } from "./string";
 import { handleType, isType } from "./typeCommand";
+import { handleStream, isStream } from "./stream";
 
+// TODO: implement a parser, not extract value like args[1], args[3]
 export async function parse(data: string): Promise<string | undefined> {
   const [
     _, // *<number>
@@ -26,6 +28,8 @@ export async function parse(data: string): Promise<string | undefined> {
     return await handleList(command, firstArgument, args.slice(4));
   } else if (isType(command)) {
     return handleType(firstArgument);
+  } else if (isStream(command)) {
+    return handleStream(command, firstArgument, args.slice(4));
   }
 
   return undefined;

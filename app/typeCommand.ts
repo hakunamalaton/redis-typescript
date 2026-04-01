@@ -1,5 +1,5 @@
 import { generateSimpleString } from "./formatResponse";
-import { listObject, stringObject } from "./structure";
+import { listObject, stringObject, streamObject } from "./structure";
 
 const TYPE = "type";
 
@@ -12,6 +12,8 @@ export function handleType(key: string): string {
     return generateSimpleString("list");
   } else if (stringObject[key]) {
     return generateSimpleString("string");
+  } else if (streamObject[key]) {
+    return generateSimpleString("stream");
   }
   return generateSimpleString("none");
 }
