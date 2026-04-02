@@ -21,3 +21,7 @@ export function generateNullArray(): string {
 export function generateNull() {
   return `$-1\r\n` as const;
 }
+
+export function generateError(message: string): string {
+  return `-${message}\r\n`;
+}

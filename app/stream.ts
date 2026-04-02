@@ -1,8 +1,38 @@
-import { generateBulkString, generateNull, generateSimpleString } from "./formatResponse";
+import { generateBulkString, generateError, generateNull, generateSimpleString } from "./formatResponse";
 import { streamObject } from "./structure";
 
 const streamCommands = {
   'xadd': 'xadd',
+}
+
+const currentTopEntry: Record<string, { timeStamp: number, sequence: number }> = {};
+
+function parseStreamId(streamKey: string, id: string) {
+  const [timeStamp, sequence] = id.split('-');
+  const timeStampNumber = Number(timeStamp);
+  const sequenceNumber = Number(sequence);
+
+  if (Number.isNaN(timeStampNumber) || Number.isNaN(sequenceNumber)) {
+    return generateError('ERR The ID specified in XADD is invalid');
+  }
+
+  if (timeStampNumber === 0 && sequenceNumber === 0) {
+    return generateError('ERR The ID specified in XADD must be greater than 0-0');
+  }
+
+  if (!currentTopEntry[streamKey]) {
+    currentTopEntry[streamKey] = { timeStamp: 0, sequence: 0 };
+  }
+
+  if (timeStampNumber < currentTopEntry[streamKey].timeStamp) {
+    return generateError('ERR The ID specified in XADD is equal or smaller than the target stream top item');
+  }
+
+  if (timeStampNumber === currentTopEntry[streamKey].timeStamp && sequenceNumber <= currentTopEntry[streamKey].sequence) {
+    return generateError('ERR The ID specified in XADD is equal or smaller than the target stream top item');
+  }
+
+  return { timeStamp: timeStampNumber, sequence: sequenceNumber };
 }
 
 function extractStreamValues(args: Array<string>) {
@@ -26,12 +56,19 @@ function isXAdd(command: string): boolean {
   return command.toLowerCase() === streamCommands['xadd'];
 }
 function handleXAdd(streamKey: string, values: Record<string, string>): string {
+  const parsed = parseStreamId(streamKey, values['id']);
+  if (typeof parsed === 'string') {
+    return parsed;
+  }
+  const { timeStamp, sequence } = parsed;
+
   if (!streamObject[streamKey]) {
     streamObject[streamKey] = {};
   }
   Object.entries(values).forEach(([key, value]) => {
     streamObject[streamKey][key] = value;
   });
+  currentTopEntry[streamKey] = { timeStamp, sequence };
   return generateBulkString(values['id']);
 }
 
