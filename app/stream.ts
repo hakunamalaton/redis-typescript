@@ -10,6 +10,9 @@ const currentTopEntry: Record<string, { timeStamp: number, sequence: number }> =
 function handleFullGeneration(streamKey: string) {
   const timeStampNumber = Date.now();
   let sequence = 0;
+  if (!currentTopEntry[streamKey]) {
+    currentTopEntry[streamKey] = { timeStamp: 0, sequence: 0 };
+  }
   if (currentTopEntry[streamKey].timeStamp === timeStampNumber) {
     sequence = currentTopEntry[streamKey].sequence + 1;
   } else {
@@ -29,6 +32,7 @@ function handlePartialGeneration(streamKey: string, timeStamp: number) {
 }
 
 function parseStreamId(streamKey: string, id: string) {
+  console.log(id);
   if (id === '*') {
     return handleFullGeneration(streamKey);
   }
