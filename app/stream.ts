@@ -7,7 +7,32 @@ const streamCommands = {
 
 const currentTopEntry: Record<string, { timeStamp: number, sequence: number }> = {};
 
+function handleFullGeneration(streamKey: string) {
+  const timeStampNumber = Date.now();
+  let sequence = 0;
+  if (currentTopEntry[streamKey].timeStamp === timeStampNumber) {
+    sequence = currentTopEntry[streamKey].sequence + 1;
+  } else {
+    sequence = 0;
+  }
+  return { timeStamp: timeStampNumber, sequence };
+}
+
+function handlePartialGeneration(streamKey: string, timeStamp: number) {
+  let sequence;
+  if (timeStamp === currentTopEntry[streamKey].timeStamp) {
+    sequence = currentTopEntry[streamKey].sequence + 1;
+  } else {
+    sequence = 0;
+  }
+  return { timeStamp, sequence };
+}
+
 function parseStreamId(streamKey: string, id: string) {
+  if (id === '*') {
+    return handleFullGeneration(streamKey);
+  }
+
   const [timeStamp, sequence] = id.split('-');
   const timeStampNumber = Number(timeStamp);
   const sequenceNumber = Number(sequence);
@@ -21,7 +46,7 @@ function parseStreamId(streamKey: string, id: string) {
   }
 
   if (!currentTopEntry[streamKey]) {
-    currentTopEntry[streamKey] = { timeStamp: 0, sequence: -1 };
+    currentTopEntry[streamKey] = { timeStamp: 0, sequence: 0 };
   }
 
   if (timeStampNumber < currentTopEntry[streamKey].timeStamp) {
@@ -33,16 +58,7 @@ function parseStreamId(streamKey: string, id: string) {
   }
 
   if (sequence === '*') {
-    if (timeStampNumber === 0 && currentTopEntry[streamKey].sequence === -1) {
-      return { timeStamp: timeStampNumber, sequence: 1 };
-    }
-    let sequence;
-    if (timeStampNumber === currentTopEntry[streamKey].timeStamp) {
-      sequence = currentTopEntry[streamKey].sequence + 1;
-    } else {
-      sequence = 0;
-    }
-    return { timeStamp: timeStampNumber, sequence };
+    return handlePartialGeneration(streamKey, timeStampNumber);
   }
 
   return { timeStamp: timeStampNumber, sequence: sequenceNumber };
