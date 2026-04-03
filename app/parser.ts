@@ -6,6 +6,24 @@ import { handleType, isType } from "./typeCommand";
 import { handleStream, isStream } from "./stream";
 
 // TODO: implement a parser, not extract value like args[1], args[3]
+/*
+PING
+ECHO toan
+SET toan lam
+set toan lam ex 5
+set toan thien px 3000
+get toan
+lpush toan thien lam ne
+rpush toan haha haha
+lrange toan 0 2
+llen toan
+lpop toan
+lpop toan 3
+blpop toan
+blpop toan 5
+xadd toan 1-1 alo 1 bar 2
+*/
+
 export async function parse(data: string): Promise<string | undefined> {
   const [
     _, // *<number>

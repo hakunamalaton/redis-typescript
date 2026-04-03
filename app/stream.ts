@@ -12,7 +12,7 @@ function parseStreamId(streamKey: string, id: string) {
   const timeStampNumber = Number(timeStamp);
   const sequenceNumber = Number(sequence);
 
-  if (Number.isNaN(timeStampNumber) || Number.isNaN(sequenceNumber)) {
+  if (Number.isNaN(timeStampNumber) || (Number.isNaN(sequenceNumber) && sequence !== '*')) {
     return generateError('ERR The ID specified in XADD is invalid');
   }
 
@@ -21,7 +21,7 @@ function parseStreamId(streamKey: string, id: string) {
   }
 
   if (!currentTopEntry[streamKey]) {
-    currentTopEntry[streamKey] = { timeStamp: 0, sequence: 0 };
+    currentTopEntry[streamKey] = { timeStamp: 0, sequence: -1 };
   }
 
   if (timeStampNumber < currentTopEntry[streamKey].timeStamp) {
@@ -30,6 +30,13 @@ function parseStreamId(streamKey: string, id: string) {
 
   if (timeStampNumber === currentTopEntry[streamKey].timeStamp && sequenceNumber <= currentTopEntry[streamKey].sequence) {
     return generateError('ERR The ID specified in XADD is equal or smaller than the target stream top item');
+  }
+
+  if (sequence === '*') {
+    if (timeStampNumber === 0 && currentTopEntry[streamKey].sequence === -1) {
+      return { timeStamp: timeStampNumber, sequence: 1 };
+    }
+    return { timeStamp: timeStampNumber, sequence: currentTopEntry[streamKey].sequence + 1 };
   }
 
   return { timeStamp: timeStampNumber, sequence: sequenceNumber };
@@ -66,10 +73,14 @@ function handleXAdd(streamKey: string, values: Record<string, string>): string {
     streamObject[streamKey] = {};
   }
   Object.entries(values).forEach(([key, value]) => {
-    streamObject[streamKey][key] = value;
+    if (key === 'id') {
+      streamObject[streamKey][key] = `${timeStamp}-${sequence}`;
+    } else {
+      streamObject[streamKey][key] = value;
+    }
   });
   currentTopEntry[streamKey] = { timeStamp, sequence };
-  return generateBulkString(values['id']);
+  return generateBulkString(streamObject[streamKey]['id']);
 }
 
 export function handleStream(command: string, key: string, args: Array<string>): string {
