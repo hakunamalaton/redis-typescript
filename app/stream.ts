@@ -36,7 +36,13 @@ function parseStreamId(streamKey: string, id: string) {
     if (timeStampNumber === 0 && currentTopEntry[streamKey].sequence === -1) {
       return { timeStamp: timeStampNumber, sequence: 1 };
     }
-    return { timeStamp: timeStampNumber, sequence: currentTopEntry[streamKey].sequence + 1 };
+    let sequence;
+    if (timeStampNumber === currentTopEntry[streamKey].timeStamp) {
+      sequence = currentTopEntry[streamKey].sequence + 1;
+    } else {
+      sequence = 0;
+    }
+    return { timeStamp: timeStampNumber, sequence };
   }
 
   return { timeStamp: timeStampNumber, sequence: sequenceNumber };
