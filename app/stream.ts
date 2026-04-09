@@ -182,13 +182,13 @@ function isXRead(command: string): boolean {
 function handleXRead(streamKey: string, idToRead: string): string {
   const [timeStamp, sequence] = idToRead.split('-');
 
-  const generatedValues: any = [[streamKey]];
+  const generatedValues: any = [[streamKey, []]];
   Object.entries(streamObject[streamKey]).forEach(([id, value]) => {
     const [currentTimeStamp, currentSequence] = id.split('-');
     if (isLargerThan(currentTimeStamp, timeStamp)) {
-      generatedValues[0].push([id, generateStreamValue(value)]);
+      generatedValues[0][1].push([id, generateStreamValue(value)]);
     } else if (currentTimeStamp === timeStamp && isLargerThan(currentSequence, sequence)) {
-      generatedValues[0].push([id, generateStreamValue(value)]);
+      generatedValues[0][1].push([id, generateStreamValue(value)]);
     }
   });
 
