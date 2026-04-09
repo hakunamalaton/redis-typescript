@@ -10,4 +10,4 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
   });
 });
 
-server.listen(6381, "127.0.0.1");
+server.listen(6379, "127.0.0.1");
