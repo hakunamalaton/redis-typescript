@@ -110,7 +110,7 @@ function handleXAdd(streamKey: string, values: Record<string, string>): string {
   if (!streamObject[streamKey]) {
     streamObject[streamKey] = {};
   }
-  let id: string = values['id'];
+  let id: string = `${timeStamp}-${sequence}`;
   Object.entries(values).forEach(([key, value]) => {
     if (key === 'id') {
       streamObject[streamKey][id] = {
