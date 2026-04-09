@@ -4,6 +4,7 @@ import { streamObject } from "./structure";
 const streamCommands = {
   'xadd': 'xadd',
   'xrange': 'xrange',
+  'xread': 'xread',
 }
 
 const currentTopEntry: Record<string, { timeStamp: number, sequence: number }> = {};
@@ -137,6 +138,14 @@ function isBetween(value: string, start: string | undefined, end: string | undef
   return true;
 }
 
+function isLargerThan(value: string, start: string | undefined): boolean {
+  console.log(value, start);
+  if (start) {
+    return Number(value) > Number(start);
+  }
+  return true;
+}
+
 function isXRange(command: string): boolean {
   return command.toLowerCase() === streamCommands['xrange'];
 }
@@ -167,11 +176,32 @@ function handleXRange(streamKey: string, start: string, end: string): string {
   return generateArray(generatedValues);
 }
 
+function isXRead(command: string): boolean {
+  return command.toLowerCase() === streamCommands['xread'];
+}
+function handleXRead(streamKey: string, idToRead: string): string {
+  const [timeStamp, sequence] = idToRead.split('-');
+
+  const generatedValues: any = [[streamKey]];
+  Object.entries(streamObject[streamKey]).forEach(([id, value]) => {
+    const [currentTimeStamp, currentSequence] = id.split('-');
+    if (isLargerThan(currentTimeStamp, timeStamp)) {
+      generatedValues[0].push([id, generateStreamValue(value)]);
+    } else if (currentTimeStamp === timeStamp && isLargerThan(currentSequence, sequence)) {
+      generatedValues[0].push([id, generateStreamValue(value)]);
+    }
+  });
+
+  return generateArray(generatedValues);
+}
+
 export function handleStream(command: string, key: string, args: Array<string>): string {
   if (isXAdd(command)) {
     return handleXAdd(key, extractStreamValues(args));
   } else if (isXRange(command)) {
     return handleXRange(key, args[1], args[3]);
+  } else if (isXRead(command)) {
+    return handleXRead(args[1], args[3]);
   }
   return generateNull();
 }
