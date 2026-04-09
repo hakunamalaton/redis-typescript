@@ -179,19 +179,24 @@ function handleXRange(streamKey: string, start: string, end: string): string {
 function isXRead(command: string): boolean {
   return command.toLowerCase() === streamCommands['xread'];
 }
-function handleXRead(streamKey: string, idToRead: string): string {
-  const [timeStamp, sequence] = idToRead.split('-');
+function handleXRead(streamKeys: Array<string>, idsToRead: Array<string>): string {
+  const generatedValues: any = [];
+  streamKeys.forEach((streamKey, index) => {
+    const idToRead = idsToRead[index];
+    const [timeStamp, sequence] = idToRead.split('-');
+    generatedValues.push([streamKey, []]);
 
-  const generatedValues: any = [[streamKey, []]];
-  Object.entries(streamObject[streamKey]).forEach(([id, value]) => {
-    const [currentTimeStamp, currentSequence] = id.split('-');
-    if (isLargerThan(currentTimeStamp, timeStamp)) {
-      generatedValues[0][1].push([id, generateStreamValue(value)]);
-    } else if (currentTimeStamp === timeStamp && isLargerThan(currentSequence, sequence)) {
-      generatedValues[0][1].push([id, generateStreamValue(value)]);
-    }
+    Object.entries(streamObject[streamKey] || {}).forEach(([id, value]) => {
+      const [currentTimeStamp, currentSequence] = id.split('-');
+
+      if (isLargerThan(currentTimeStamp, timeStamp)) {
+        generatedValues[generatedValues.length - 1][1].push([id, generateStreamValue(value)]);
+      } else if (currentTimeStamp === timeStamp && isLargerThan(currentSequence, sequence)) {
+        generatedValues[generatedValues.length - 1][1].push([id, generateStreamValue(value)]);
+      }
+    });
+    generatedValues.push(generateArray(generatedValues[0][1]));
   });
-
   return generateArray(generatedValues);
 }
 
@@ -201,7 +206,11 @@ export function handleStream(command: string, key: string, args: Array<string>):
   } else if (isXRange(command)) {
     return handleXRange(key, args[1], args[3]);
   } else if (isXRead(command)) {
-    return handleXRead(args[1], args[3]);
+    const totalStreamKeys = (args.length - 1) / 2; // we have empty string at the last
+    return handleXRead(
+      args.slice(0, totalStreamKeys).filter((_, index) => index % 2 === 1),
+      args.slice(totalStreamKeys, args.length - 1).filter((_, index) => index % 2 === 1)
+    );
   }
   return generateNull();
 }
