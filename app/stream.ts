@@ -85,14 +85,16 @@ export function isStream(command: string): boolean {
   return Object.keys(streamCommands).includes(command.toLowerCase());
 }
 
-function generateStreamValue(value: Record<string, string>): string {
+function generateStreamValue(value: Record<string, string>) {
   const result: Array<string> = [];
 
   Object.entries(value).forEach(([key, value]) => {
-    result.push(key, value);
+    if (key !== 'id') {
+      result.push(key, value);
+    }
   });
 
-  return generateArray(result);
+  return result;
 }
 
 function isXAdd(command: string): boolean {
@@ -143,7 +145,7 @@ function handleXRange(streamKey: string, start: string, end: string): string {
     return generateArray([]);
   }
 
-  const generatedValues: Array<Array<string>> = [];
+  const generatedValues: Array<[string, Array<string>]> = [];
 
   Object.entries(streamObject[streamKey]).forEach(([id, value]) => {
     const [timeStamp, sequence] = id.split('-');
@@ -151,7 +153,7 @@ function handleXRange(streamKey: string, start: string, end: string): string {
     const [endTimeStamp, endSequence] = end.split('-');
 
     if (isBetween(timeStamp, startTimeStamp, endTimeStamp) && isBetween(sequence, startSequence, endSequence)) {
-      generatedValues.push([generateBulkString(id), generateStreamValue(value)]);
+      generatedValues.push([id, generateStreamValue(value)]);
     }
   });
 
