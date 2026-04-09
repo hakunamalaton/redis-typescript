@@ -126,6 +126,7 @@ function handleXAdd(streamKey: string, values: Record<string, string>): string {
 }
 
 function isBetween(value: string, start: string | undefined, end: string | undefined): boolean {
+  console.log(start, end);
   if (start && end) {
     return Number(value) >= Number(start) && Number(value) <= Number(end);
   } else if (start) {
