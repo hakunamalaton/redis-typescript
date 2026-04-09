@@ -126,7 +126,6 @@ function handleXAdd(streamKey: string, values: Record<string, string>): string {
 }
 
 function isBetween(value: string, start: string | undefined, end: string | undefined): boolean {
-  console.log(start, end);
   if (start && end) {
     return Number(value) >= Number(start) && Number(value) <= Number(end);
   } else if (start) {
@@ -150,8 +149,15 @@ function handleXRange(streamKey: string, start: string, end: string): string {
 
   Object.entries(streamObject[streamKey]).forEach(([id, value]) => {
     const [timeStamp, sequence] = id.split('-');
-    const [startTimeStamp, startSequence] = start.split('-');
-    const [endTimeStamp, endSequence] = end.split('-');
+    let [startTimeStamp, startSequence]: [string | undefined, string | undefined] = [start.split('-')[0], start.split('-')[1]];
+    let [endTimeStamp, endSequence]: [string | undefined, string | undefined] = [end.split('-')[0], end.split('-')[1]];
+
+    if (startTimeStamp === '-') {
+      startTimeStamp = undefined;
+    }
+    if (endTimeStamp === '+') {
+      endTimeStamp = undefined;
+    }
 
     if (isBetween(timeStamp, startTimeStamp, endTimeStamp) && isBetween(sequence, startSequence, endSequence)) {
       generatedValues.push([id, generateStreamValue(value)]);
