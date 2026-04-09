@@ -195,7 +195,6 @@ function handleXRead(streamKeys: Array<string>, idsToRead: Array<string>): strin
         generatedValues[generatedValues.length - 1][1].push([id, generateStreamValue(value)]);
       }
     });
-    generatedValues.push(generateArray(generatedValues[0][1]));
   });
   return generateArray(generatedValues);
 }
