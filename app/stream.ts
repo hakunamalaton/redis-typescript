@@ -1,8 +1,9 @@
-import { generateBulkString, generateError, generateNull, generateSimpleString } from "./formatResponse";
+import { generateArray, generateBulkString, generateError, generateNull, generateSimpleString } from "./formatResponse";
 import { streamObject } from "./structure";
 
 const streamCommands = {
   'xadd': 'xadd',
+  'xrange': 'xrange',
 }
 
 const currentTopEntry: Record<string, { timeStamp: number, sequence: number }> = {};
@@ -32,7 +33,6 @@ function handlePartialGeneration(streamKey: string, timeStamp: number) {
 }
 
 function parseStreamId(streamKey: string, id: string) {
-  console.log(id);
   if (id === '*') {
     return handleFullGeneration(streamKey);
   }
@@ -85,6 +85,16 @@ export function isStream(command: string): boolean {
   return Object.keys(streamCommands).includes(command.toLowerCase());
 }
 
+function generateStreamValue(value: Record<string, string>): string {
+  const result: Array<string> = [];
+
+  Object.entries(value).forEach(([key, value]) => {
+    result.push(key, value);
+  });
+
+  return generateArray(result);
+}
+
 function isXAdd(command: string): boolean {
   return command.toLowerCase() === streamCommands['xadd'];
 }
@@ -98,20 +108,46 @@ function handleXAdd(streamKey: string, values: Record<string, string>): string {
   if (!streamObject[streamKey]) {
     streamObject[streamKey] = {};
   }
+  let id: string = values['id'];
   Object.entries(values).forEach(([key, value]) => {
     if (key === 'id') {
-      streamObject[streamKey][key] = `${timeStamp}-${sequence}`;
+      streamObject[streamKey][id] = {
+        id,
+      };
     } else {
-      streamObject[streamKey][key] = value;
+      streamObject[streamKey][id][key] = value;
     }
   });
   currentTopEntry[streamKey] = { timeStamp, sequence };
-  return generateBulkString(streamObject[streamKey]['id']);
+
+  return generateBulkString(id);
+}
+
+function isXRange(command: string): boolean {
+  return command.toLowerCase() === streamCommands['xrange'];
+}
+function handleXRange(streamKey: string, start: string, end: string): string {
+  if (!streamObject[streamKey]) {
+    return generateArray([]);
+  }
+
+  const generatedValues: Array<Array<string>> = [];
+
+  Object.entries(streamObject[streamKey]).forEach(([id, value]) => {
+    const timeStamp = Number(id.split('-')[0]);
+    if (timeStamp >= Number(start) && timeStamp <= Number(end)) {
+      generatedValues.push([generateBulkString(id), generateStreamValue(value)]);
+    }
+  });
+
+  return generateArray(generatedValues);
 }
 
 export function handleStream(command: string, key: string, args: Array<string>): string {
   if (isXAdd(command)) {
     return handleXAdd(key, extractStreamValues(args));
+  } else if (isXRange(command)) {
+    return handleXRange(key, args[1], args[3]);
   }
   return generateNull();
 }
