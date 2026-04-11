@@ -1,4 +1,4 @@
-import { generateArray, generateBulkString, generateError, generateNull, generateSimpleString } from "./formatResponse";
+import { generateArray, generateBulkString, generateError, generateNull, generateNullArray } from "./formatResponse";
 import { notifyWaiters, registerWaiter, removeWaiter } from "./services/block";
 import { streamObject } from "./structure";
 
@@ -141,7 +141,6 @@ function isBetween(value: string, start: string | undefined, end: string | undef
 }
 
 function isLargerThan(value: string, start: string | undefined): boolean {
-  console.log(value, start);
   if (start) {
     return Number(value) > Number(start);
   }
@@ -206,7 +205,7 @@ function handleXRead(streamKeys: Array<string>, idsToRead: Array<string>): strin
   return generateArray(getReadResponse(streamKeys, idsToRead));
 }
 async function handleXReadBlock(streamKey: string, timeout: number, idToRead: string) {
-  const values = await new Promise<Array<string>>((resolve) => {
+  const values = await new Promise<Array<string> | null>((resolve) => {
     const waiterFn = function(eventValues: Array<string>) {
       const response = getReadResponse([streamKey], [idToRead]);
       resolve(response);
@@ -216,10 +215,14 @@ async function handleXReadBlock(streamKey: string, timeout: number, idToRead: st
     if (timeout > 0) {
       setTimeout(() => {
         removeWaiter(streamKey, waiterFn);
-        resolve([]);
+        resolve(null);
       }, timeout);
     }
   });
+
+  if (values === null) {
+    return generateNullArray();
+  }
 
   return generateArray(values);
 }
