@@ -2,7 +2,7 @@
 const waiters: Record<string, Array<(value: string | null) => void>> = {};
 
 export function notifyWaiters(key: string, value: any): void {
-  while (waiters[key]?.length) {
+  if (waiters[key]?.length) {
     const waiter = waiters[key].shift()!;
     waiter(value);
   }
