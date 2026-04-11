@@ -122,8 +122,8 @@ function handleXAdd(streamKey: string, values: Record<string, string>): string {
       streamObject[streamKey][id][key] = value;
     }
   });
-  notifyWaiters(streamKey, getReadResponse([streamKey], [id]));
   currentTopEntry[streamKey] = { timeStamp, sequence };
+  notifyWaiters(streamKey, getReadResponse([streamKey], [id]));
 
   return generateBulkString(id);
 }
@@ -204,9 +204,10 @@ function getReadResponse(streamKeys: Array<string>, idsToRead: Array<string>) {
 function getLastEvent(streamKey: string) {
   const generatedValues: any = [];
 
-  Object.entries(streamObject[streamKey] || {}).forEach(([id, value]) => {
-    generatedValues.push([id, generateStreamValue(value)]);
-  });
+  const lastTimestamp = currentTopEntry[streamKey];
+  if (lastTimestamp) {
+    generatedValues.push([streamKey, generateStreamValue(streamObject[streamKey][`${lastTimestamp.timeStamp}-${lastTimestamp.sequence}`])]);
+  }
   return generatedValues;
 }
 function handleXRead(streamKeys: Array<string>, idsToRead: Array<string>): string {
