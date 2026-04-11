@@ -201,13 +201,21 @@ function getReadResponse(streamKeys: Array<string>, idsToRead: Array<string>) {
 
   return generatedValues;
 }
+function getLastEvent(streamKey: string) {
+  const generatedValues: any = [];
+
+  Object.entries(streamObject[streamKey] || {}).forEach(([id, value]) => {
+    generatedValues.push([id, generateStreamValue(value)]);
+  });
+  return generatedValues;
+}
 function handleXRead(streamKeys: Array<string>, idsToRead: Array<string>): string {
   return generateArray(getReadResponse(streamKeys, idsToRead));
 }
 async function handleXReadBlock(streamKey: string, timeout: number, idToRead: string) {
   const values = await new Promise<Array<string> | null>((resolve) => {
     const waiterFn = function(eventValues: Array<string>) {
-      const response = getReadResponse([streamKey], [idToRead]);
+      const response = idToRead === '$' ? getLastEvent(streamKey) : getReadResponse([streamKey], [idToRead]);
       resolve(response);
     }
     registerWaiter(streamKey, waiterFn);
