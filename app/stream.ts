@@ -1,4 +1,5 @@
 import { generateArray, generateBulkString, generateError, generateNull, generateSimpleString } from "./formatResponse";
+import { notifyWaiters, registerWaiter, removeWaiter } from "./services/block";
 import { streamObject } from "./structure";
 
 const streamCommands = {
@@ -121,6 +122,7 @@ function handleXAdd(streamKey: string, values: Record<string, string>): string {
       streamObject[streamKey][id][key] = value;
     }
   });
+  notifyWaiters(streamKey, getReadResponse([streamKey], [id]));
   currentTopEntry[streamKey] = { timeStamp, sequence };
 
   return generateBulkString(id);
@@ -179,8 +181,9 @@ function handleXRange(streamKey: string, start: string, end: string): string {
 function isXRead(command: string): boolean {
   return command.toLowerCase() === streamCommands['xread'];
 }
-function handleXRead(streamKeys: Array<string>, idsToRead: Array<string>): string {
+function getReadResponse(streamKeys: Array<string>, idsToRead: Array<string>) {
   const generatedValues: any = [];
+
   streamKeys.forEach((streamKey, index) => {
     const idToRead = idsToRead[index];
     const [timeStamp, sequence] = idToRead.split('-');
@@ -196,15 +199,42 @@ function handleXRead(streamKeys: Array<string>, idsToRead: Array<string>): strin
       }
     });
   });
-  return generateArray(generatedValues);
+
+  return generatedValues;
+}
+function handleXRead(streamKeys: Array<string>, idsToRead: Array<string>): string {
+  return generateArray(getReadResponse(streamKeys, idsToRead));
+}
+async function handleXReadBlock(streamKey: string, timeout: number, idToRead: string) {
+  const values = await new Promise<Array<string>>((resolve) => {
+    const waiterFn = function(eventValues: Array<string>) {
+      const response = getReadResponse([streamKey], [idToRead]);
+      resolve(response);
+    }
+    registerWaiter(streamKey, waiterFn);
+
+    if (timeout > 0) {
+      setTimeout(() => {
+        removeWaiter(streamKey, waiterFn);
+        resolve([]);
+      }, timeout);
+    }
+  });
+
+  return generateArray(values);
 }
 
-export function handleStream(command: string, key: string, args: Array<string>): string {
+export async function handleStream(command: string, key: string, args: Array<string>): Promise<string> {
   if (isXAdd(command)) {
     return handleXAdd(key, extractStreamValues(args));
   } else if (isXRange(command)) {
     return handleXRange(key, args[1], args[3]);
   } else if (isXRead(command)) {
+    const isBlock = key.toLowerCase() === 'block';
+    if (isBlock) {
+      return await handleXReadBlock(args[5], Number(args[1]), args[7]);
+    }
+
     const totalStreamKeys = (args.length - 1) / 2; // we have empty string at the last
     return handleXRead(
       args.slice(0, totalStreamKeys).filter((_, index) => index % 2 === 1),

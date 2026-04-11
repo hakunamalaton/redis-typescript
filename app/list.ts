@@ -1,5 +1,6 @@
 import { generateArray, generateBulkString, generateInteger, generateNull, generateNullArray } from "./formatResponse";
 import { listObject } from "./structure";
+import { notifyWaiters, registerWaiter, removeWaiter } from "./services/block";
 
 const listCommands = {
   'rpush': 'rpush',
@@ -10,21 +11,12 @@ const listCommands = {
   'blpop': 'blpop',
 }
 
-const waiters: Record<string, Array<(value: string | null) => void>> = {};
-
 export function isList(command: string): boolean {
   return Object.keys(listCommands).includes(command.toLowerCase());
 }
 
 function isRPush(command: string): boolean {
   return command.toLowerCase() === listCommands['rpush'];
-}
-function notifyWaiters(key: string): void {
-  while (waiters[key]?.length && listObject[key]?.length) {
-    const waiter = waiters[key].shift()!;
-    const value = listObject[key].shift()!;
-    waiter(value);
-  }
 }
 
 function handleRPush(key: string, values: Array<string>): string {
@@ -33,7 +25,7 @@ function handleRPush(key: string, values: Array<string>): string {
   }
   listObject[key].push(...values);
   const newLength = listObject[key].length;
-  notifyWaiters(key);
+  notifyWaiters(key, values[0]);
   return generateInteger(newLength);
 }
 
@@ -63,7 +55,7 @@ function handleLPush(key: string, values: Array<string>): string {
   }
   listObject[key].unshift(...values.toReversed());
   const newLength = listObject[key].length;
-  notifyWaiters(key);
+  notifyWaiters(key, values[values.length - 1]);
   return generateInteger(newLength);
 }
 
@@ -102,18 +94,16 @@ async function handleBLPop(key: string, timeout: number) {
     return generateArray([key, existing]);
   }
 
-  // Register a waiter and wait for a push to resolve it
   const value = await new Promise<string | null>((resolve) => {
-    if (!waiters[key]) waiters[key] = [];
-    waiters[key].push(resolve);
+    const waiterFn = function(value: string | null) {
+      listObject[key].shift();
+      resolve(value);
+    }
+    registerWaiter(key, waiterFn);
 
     if (timeout > 0) {
       setTimeout(() => {
-        // Remove this waiter on timeout
-        const idx = waiters[key]?.indexOf(resolve);
-        if (idx !== undefined && idx !== -1) {
-          waiters[key].splice(idx, 1);
-        }
+        removeWaiter(key, waiterFn);
         resolve(null);
       }, timeout * 1000);
     }

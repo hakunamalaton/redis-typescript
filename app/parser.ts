@@ -47,7 +47,7 @@ export async function parse(data: string): Promise<string | undefined> {
   } else if (isType(command)) {
     return handleType(firstArgument);
   } else if (isStream(command)) {
-    return handleStream(command, firstArgument, args.slice(4));
+    return await handleStream(command, firstArgument, args.slice(4));
   }
 
   return undefined;
