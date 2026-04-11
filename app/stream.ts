@@ -206,7 +206,10 @@ function getLastEvent(streamKey: string) {
 
   const lastTimestamp = currentTopEntry[streamKey];
   if (lastTimestamp) {
-    generatedValues.push([streamKey, generateStreamValue(streamObject[streamKey][`${lastTimestamp.timeStamp}-${lastTimestamp.sequence}`])]);
+    generatedValues.push([streamKey, [
+      `${lastTimestamp.timeStamp}-${lastTimestamp.sequence}`,
+      generateStreamValue(streamObject[streamKey][`${lastTimestamp.timeStamp}-${lastTimestamp.sequence}`]),
+    ]]);
   }
   return generatedValues;
 }
