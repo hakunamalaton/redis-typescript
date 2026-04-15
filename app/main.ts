@@ -32,8 +32,9 @@ if (values.replicaof) {
   const [masterHost, masterPort] = values.replicaof.split(" ");
   const masterConnection = net.createConnection(
     { host: masterHost, port: Number(masterPort) },
-    () => {
-      const res = masterConnection.write(generateArray(["PING"]));
+    async () => {
+      const res = await masterConnection.write(generateArray(["PING"]));
+
       if (res) {
         masterConnection.write(generateArray(['REPLCONF', 'listening-port', values.port]));
         masterConnection.write(generateArray(['REPLCONF', 'capa', 'psync2']));
