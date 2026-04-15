@@ -39,10 +39,12 @@ if (values.replicaof) {
   );
 
   masterConnection.on("data", (data: Buffer) => {
-    const response = data.toString();
-    console.log("Master response:", response);
     // After receiving +PONG, send the next handshake steps:
-
-    masterConnection.write(generateArray(['REPLCONF', 'listening-port', values.port!]));
+    if (data.toString().includes('+PONG')) {
+      masterConnection.write(generateArray(['REPLCONF', 'listening-port', values.port!]));
+    }
+    if (data.toString().includes('+OK')) {
+      masterConnection.write(generateArray(['REPLCONF', 'capa', 'psync2']));
+    }
   });
 }
