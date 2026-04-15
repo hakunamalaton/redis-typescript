@@ -36,8 +36,8 @@ if (values.replicaof) {
       const res = await masterConnection.write(generateArray(["PING"]));
 
       if (res) {
-        masterConnection.write(generateArray(['REPLCONF', 'listening-port', values.port]));
-        masterConnection.write(generateArray(['REPLCONF', 'capa', 'psync2']));
+        // masterConnection.write(generateArray(['REPLCONF', 'listening-port', values.port]));
+        // masterConnection.write(generateArray(['REPLCONF', 'capa', 'psync2']));
       }
     }
   );
