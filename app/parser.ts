@@ -25,7 +25,7 @@ blpop toan 5
 xadd toan 1-1 alo 1 bar 2
 */
 
-export async function parse(data: string): Promise<string | undefined> {
+export async function parse(data: string, replicaof: string | undefined): Promise<string | undefined> {
   const [
     _, // *<number>
     ...args
@@ -50,7 +50,7 @@ export async function parse(data: string): Promise<string | undefined> {
   } else if (isStream(command)) {
     return await handleStream(command, firstArgument, args.slice(4));
   } else if (isInfo(command)) {
-    return handleInfo(firstArgument);
+    return handleInfo(firstArgument, replicaof);
   }
 
   return undefined;

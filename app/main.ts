@@ -9,12 +9,17 @@ const { values } = parseArgs({
       type: "string",
       default: "6379",
     },
+    replicaof: {
+      type: "string",
+    }
   },
 });
 
+console.log(values);
+
 const server: net.Server = net.createServer((connection: net.Socket) => {
   connection.on("data", async (data: Buffer) => {
-    const response = await parse(data.toString());
+    const response = await parse(data.toString(), values.replicaof || undefined);
     if (response) {
       connection.write(response);
     }
