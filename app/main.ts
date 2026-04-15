@@ -31,20 +31,18 @@ server.listen(Number(values.port), "127.0.0.1");
 
 if (values.replicaof) {
   const [masterHost, masterPort] = values.replicaof.split(" ");
-  const masterConnection = net.createConnection(
-    { host: masterHost, port: Number(masterPort) },
-    () => {
-      masterConnection.write(generateArray(["PING"]));
-    }
-  );
+  const masterConnection = net.createConnection({ host: masterHost, port: Number(masterPort) });
 
-  masterConnection.on("data", (data: Buffer) => {
-    // After receiving +PONG, send the next handshake steps:
-    if (data.toString().includes('+PONG')) {
-      masterConnection.write(generateArray(['REPLCONF', 'listening-port', values.port!]));
-    }
-    if (data.toString().includes('+OK')) {
-      masterConnection.write(generateArray(['REPLCONF', 'capa', 'psync2']));
-    }
+  function sendAndReceive(socket: net.Socket, message: string): Promise<string> {
+    return new Promise((resolve) => {
+      socket.once("data", (data: Buffer) => resolve(data.toString()));
+      socket.write(message);
+    });
+  }
+
+  masterConnection.on("connect", async () => {
+    await sendAndReceive(masterConnection, generateArray(["PING"]));
+    await sendAndReceive(masterConnection, generateArray(["REPLCONF", "listening-port", values.port!]));
+    await sendAndReceive(masterConnection, generateArray(["REPLCONF", "capa", "psync2"]));
   });
 }
