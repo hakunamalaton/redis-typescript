@@ -18,6 +18,7 @@ const { values } = parseArgs({
 
 const server: net.Server = net.createServer((connection: net.Socket) => {
   connection.on("data", async (data: Buffer) => {
+    console.log(data.toString());
     const response = await parse(data.toString(), values.replicaof || undefined);
     if (response) {
       connection.write(response);
@@ -32,13 +33,17 @@ if (values.replicaof) {
   const [masterHost, masterPort] = values.replicaof.split(" ");
   const masterConnection = net.createConnection(
     { host: masterHost, port: Number(masterPort) },
-    async () => {
-      const res = await masterConnection.write(generateArray(["PING"]));
-
-      if (res) {
-        // masterConnection.write(generateArray(['REPLCONF', 'listening-port', values.port]));
-        // masterConnection.write(generateArray(['REPLCONF', 'capa', 'psync2']));
-      }
+    () => {
+      masterConnection.write(generateArray(["PING"]));
     }
   );
+
+  masterConnection.on("data", (data: Buffer) => {
+    const response = data.toString();
+    console.log("Master response:", response);
+    // After receiving +PONG, send the next handshake steps:
+
+    masterConnection.write(generateArray(['REPLCONF', 'listening-port', values.port!]));
+    masterConnection.write(generateArray(['REPLCONF', 'capa', 'psync2']));
+  });
 }
