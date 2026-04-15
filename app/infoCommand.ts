@@ -1,4 +1,4 @@
-import { generateSimpleString } from "./formatResponse";
+import { generateBulkString } from "./formatResponse";
 
 const INFO = "info";
 const REPLICATION = "replication";
@@ -9,7 +9,7 @@ export function isInfo(command: string): boolean {
 
 export function handleInfo(type: string): string {
   if (type.toLowerCase() === REPLICATION) {
-    return generateSimpleString(`role:master`);
+    return generateBulkString(`role:master`);
   }
-  return generateSimpleString("OK");
+  return generateBulkString("OK");
 }
