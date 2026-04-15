@@ -44,6 +44,5 @@ if (values.replicaof) {
     // After receiving +PONG, send the next handshake steps:
 
     masterConnection.write(generateArray(['REPLCONF', 'listening-port', values.port!]));
-    masterConnection.write(generateArray(['REPLCONF', 'capa', 'psync2']));
   });
 }

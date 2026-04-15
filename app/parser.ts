@@ -5,6 +5,7 @@ import { handleString, isString } from "./string";
 import { handleType, isType } from "./typeCommand";
 import { handleStream, isStream } from "./stream";
 import { handleInfo, isInfo } from "./infoCommand";
+import { handleReplConf, isReplConf } from "./replCommand";
 
 // TODO: implement a parser, not extract value like args[1], args[3]
 /*
@@ -51,6 +52,8 @@ export async function parse(data: string, replicaof: string | undefined): Promis
     return await handleStream(command, firstArgument, args.slice(4));
   } else if (isInfo(command)) {
     return handleInfo(firstArgument, replicaof);
+  } else if (isReplConf(command)) {
+    return handleReplConf(firstArgument, replicaof);
   }
 
   return undefined;
