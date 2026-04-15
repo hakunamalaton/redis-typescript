@@ -12,7 +12,7 @@ export function handleInfo(type: string, replicaof: string | undefined): string 
     if (replicaof) {
       return generateBulkString(`role:slave`);
     }
-    return generateBulkString(`role:master`);
+    return generateBulkString(`role:master\nmaster_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb\nmaster_repl_offset:0`);
   }
   return generateBulkString("OK");
 }
