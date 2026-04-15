@@ -44,5 +44,6 @@ if (values.replicaof) {
     await sendAndReceive(masterConnection, generateArray(["PING"]));
     await sendAndReceive(masterConnection, generateArray(["REPLCONF", "listening-port", values.port!]));
     await sendAndReceive(masterConnection, generateArray(["REPLCONF", "capa", "psync2"]));
+    await sendAndReceive(masterConnection, generateArray(["PSYNC", "?", "-1"]));
   });
 }
