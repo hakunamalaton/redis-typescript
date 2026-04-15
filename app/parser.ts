@@ -4,6 +4,7 @@ import { handlePing, isPing } from "./pingCommand";
 import { handleString, isString } from "./string";
 import { handleType, isType } from "./typeCommand";
 import { handleStream, isStream } from "./stream";
+import { handleInfo, isInfo } from "./infoCommand";
 
 // TODO: implement a parser, not extract value like args[1], args[3]
 /*
@@ -48,6 +49,8 @@ export async function parse(data: string): Promise<string | undefined> {
     return handleType(firstArgument);
   } else if (isStream(command)) {
     return await handleStream(command, firstArgument, args.slice(4));
+  } else if (isInfo(command)) {
+    return handleInfo(firstArgument);
   }
 
   return undefined;
